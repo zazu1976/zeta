@@ -1,7 +1,6 @@
--- // ZETA LABS // Bio-Scanner GUI with Animated Health Bar + Auto-Scan
 local Players = game:GetService('Players')
-local UserInputService = game:GetService('UserInputService')
 local RunService = game:GetService('RunService')
+local UserInputService = game:GetService('UserInputService')
 local player = Players.LocalPlayer
 
 -- GUI Creation
@@ -11,17 +10,15 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild('PlayerGui')
 
 local frame = Instance.new('Frame')
-frame.Name = 'MainFrame'
-frame.Size = UDim2.new(0, 400, 0, 420) -- taller to fit health bar
-frame.Position = UDim2.new(0.5, -200, 0.5, -210)
+frame.Size = UDim2.new(0, 400, 0, 450)
+frame.Position = UDim2.new(0.5, -200, 0.5, -225)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 frame.BorderSizePixel = 0
 frame.Parent = gui
 Instance.new('UICorner', frame).CornerRadius = UDim.new(0, 12)
 
--- Title bar
+-- Title
 local title = Instance.new('TextLabel')
-title.Name = 'Title'
 title.Size = UDim2.new(1, -30, 0, 30)
 title.Position = UDim2.new(0, 0, 0, 0)
 title.BackgroundTransparency = 1
@@ -32,9 +29,8 @@ title.TextColor3 = Color3.fromRGB(200, 255, 255)
 title.TextXAlignment = Enum.TextXAlignment.Left
 title.Parent = frame
 
--- Close button
+-- Close Button
 local closeBtn = Instance.new('TextButton')
-closeBtn.Name = 'CloseBtn'
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -30, 0, 0)
 closeBtn.Text = 'X'
@@ -47,9 +43,8 @@ closeBtn.MouseButton1Click:Connect(function()
     gui.Enabled = false
 end)
 
--- Player name box
+-- Target Box
 local box = Instance.new('TextBox')
-box.Name = 'TargetBox'
 box.Size = UDim2.new(1, -20, 0, 30)
 box.Position = UDim2.new(0, 10, 0, 45)
 box.PlaceholderText = 'Enter player name (leave empty for self)'
@@ -61,109 +56,261 @@ box.ClearTextOnFocus = false
 box.Parent = frame
 Instance.new('UICorner', box).CornerRadius = UDim.new(0, 6)
 
--- Scan button
-local scanBtn = Instance.new('TextButton')
-scanBtn.Name = 'ScanButton'
-scanBtn.Size = UDim2.new(1, -20, 0, 30)
-scanBtn.Position = UDim2.new(0, 10, 0, 85)
-scanBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
-scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-scanBtn.Font = Enum.Font.GothamBold
-scanBtn.TextSize = 16
-scanBtn.Text = 'SCAN'
-scanBtn.Parent = frame
-Instance.new('UICorner', scanBtn).CornerRadius = UDim.new(0, 6)
+-- Dropdown for player list
+local dropdown = Instance.new('ScrollingFrame')
+dropdown.Size = UDim2.new(1, -20, 0, 150)
+dropdown.Position = UDim2.new(0, 10, 0, 80)
+dropdown.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+dropdown.BorderSizePixel = 0
+dropdown.Visible = false
+dropdown.ScrollBarThickness = 6
+dropdown.CanvasSize = UDim2.new(0, 0, 0, 0)
+dropdown.ZIndex = 10
+dropdown.Parent = frame
+Instance.new('UICorner', dropdown).CornerRadius = UDim.new(0, 6)
 
--- Auto-Scan button
-local autoBtn = Instance.new('TextButton')
-autoBtn.Name = 'AutoScanButton'
-autoBtn.Size = UDim2.new(1, -20, 0, 30)
-autoBtn.Position = UDim2.new(0, 10, 0, 125)
-autoBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
-autoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-autoBtn.Font = Enum.Font.GothamBold
-autoBtn.TextSize = 16
-autoBtn.Text = 'AUTO-SCAN: OFF'
-autoBtn.Parent = frame
-Instance.new('UICorner', autoBtn).CornerRadius = UDim.new(0, 6)
+local dropdownList = Instance.new('UIListLayout')
+dropdownList.Parent = dropdown
+dropdownList.SortOrder = Enum.SortOrder.Name
+dropdownList.Padding = UDim.new(0, 2)
 
--- Readout frame
-local readout = Instance.new('Frame')
-readout.Name = 'Readout'
-readout.Size = UDim2.new(1, -20, 0, 180)
-readout.Position = UDim2.new(0, 10, 0, 165)
-readout.BackgroundTransparency = 1
-readout.Parent = frame
+-- Function to update dropdown with players
+local function updateDropdown(searchText)
+    -- Clear existing buttons
+    for _, child in ipairs(dropdown:GetChildren()) do
+        if child:IsA('TextButton') then
+            child:Destroy()
+        end
+    end
 
--- Readout labels
-local function makeLabel(name, y)
+    searchText = searchText:lower()
+    local count = 0
+
+    for _, p in ipairs(Players:GetPlayers()) do
+        if searchText == '' or p.Name:lower():find(searchText, 1, true) then
+            count = count + 1
+
+            local btn = Instance.new('TextButton')
+            btn.Size = UDim2.new(1, -10, 0, 30)
+            btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            btn.Text = p.Name
+            btn.Font = Enum.Font.Gotham
+            btn.TextSize = 14
+            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            btn.TextXAlignment = Enum.TextXAlignment.Left
+            btn.TextTruncate = Enum.TextTruncate.AtEnd
+            btn.ZIndex = 11
+            btn.Parent = dropdown
+            Instance.new('UIPadding', btn).PaddingLeft = UDim.new(0, 10)
+            Instance.new('UICorner', btn).CornerRadius = UDim.new(0, 4)
+
+            btn.MouseButton1Click:Connect(function()
+                box.Text = p.Name
+                dropdown.Visible = false
+            end)
+
+            btn.MouseEnter:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(60, 120, 120)
+            end)
+
+            btn.MouseLeave:Connect(function()
+                btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            end)
+        end
+    end
+
+    dropdown.CanvasSize = UDim2.new(0, 0, 0, count * 32)
+end
+
+-- Show/hide dropdown on focus
+box.Focused:Connect(function()
+    updateDropdown(box.Text)
+    dropdown.Visible = true
+    -- Disable tab buttons while dropdown is open
+    tab1Btn.Active = false
+    tab2Btn.Active = false
+end)
+
+box:GetPropertyChangedSignal('Text'):Connect(function()
+    if box:IsFocused() then
+        updateDropdown(box.Text)
+    end
+end)
+
+box.FocusLost:Connect(function()
+    -- Delay hiding to allow button clicks
+    task.wait(0.1)
+    dropdown.Visible = false
+    -- Re-enable tab buttons
+    tab1Btn.Active = true
+    tab2Btn.Active = true
+end)
+
+-- Tab Buttons Container
+local tabContainer = Instance.new('Frame')
+tabContainer.Size = UDim2.new(1, -20, 0, 30)
+tabContainer.Position = UDim2.new(0, 10, 0, 85)
+tabContainer.BackgroundTransparency = 1
+tabContainer.Parent = frame
+
+-- Tab Button Function
+local function makeTabButton(text, position, width)
+    local btn = Instance.new('TextButton')
+    btn.Size = UDim2.new(0, width, 1, 0)
+    btn.Position = UDim2.new(0, position, 0, 0)
+    btn.Text = text
+    btn.Font = Enum.Font.GothamBold
+    btn.TextSize = 14
+    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    btn.BorderSizePixel = 0
+    btn.Parent = tabContainer
+    Instance.new('UICorner', btn).CornerRadius = UDim.new(0, 6)
+    return btn
+end
+
+local tab1Btn = makeTabButton('BIO DATA', 0, 185)
+local tab2Btn = makeTabButton('STATS', 195, 185)
+
+-- Content Container
+local contentFrame = Instance.new('Frame')
+contentFrame.Size = UDim2.new(1, -20, 0, 300)
+contentFrame.Position = UDim2.new(0, 10, 0, 125)
+contentFrame.BackgroundTransparency = 1
+contentFrame.Parent = frame
+
+-- Tab 1 Content (Bio Data)
+local tab1Content = Instance.new('Frame')
+tab1Content.Size = UDim2.new(1, 0, 1, 0)
+tab1Content.BackgroundTransparency = 1
+tab1Content.Visible = true
+tab1Content.Parent = contentFrame
+
+-- Tab 2 Content (Stats)
+local tab2Content = Instance.new('Frame')
+tab2Content.Size = UDim2.new(1, 0, 1, 0)
+tab2Content.BackgroundTransparency = 1
+tab2Content.Visible = false
+tab2Content.Parent = contentFrame
+
+-- Utility function to create labels
+local function makeLabel(name, y, parent)
     local lbl = Instance.new('TextLabel')
     lbl.Name = name
+    lbl.Size = UDim2.new(1, 0, 0, 25)
+    lbl.Position = UDim2.new(0, 0, 0, y)
     lbl.BackgroundTransparency = 1
     lbl.Font = Enum.Font.Gotham
     lbl.TextSize = 16
     lbl.TextColor3 = Color3.fromRGB(200, 255, 200)
-    lbl.Position = UDim2.new(0, 0, 0, y)
-    lbl.Size = UDim2.new(1, 0, 0, 25)
     lbl.Text = name .. ': [N/A]'
-    lbl.Parent = readout
+    lbl.TextXAlignment = Enum.TextXAlignment.Left
+    lbl.Parent = parent
     return lbl
 end
 
-local labels = {
-    Subject = makeLabel('Subject', 0),
-    Exposure = makeLabel('Exposure', 25),
-    Strength = makeLabel('Strength', 50),
-    Agility = makeLabel('Agility', 75),
-    Intelligence = makeLabel('Intelligence', 100),
-    Mutation = makeLabel('Mutation', 125),
-    Health = makeLabel('Health', 150),
+-- Tab 1 Labels (Bio Data)
+local tab1Labels = {
+    Subject = makeLabel('Subject', 0, tab1Content),
+    Exposure = makeLabel('Exposure', 25, tab1Content),
+    Strength = makeLabel('Strength', 50, tab1Content),
+    Agility = makeLabel('Agility', 75, tab1Content),
+    Intelligence = makeLabel('Intelligence', 100, tab1Content),
+    MutationType = makeLabel('MutationType', 125, tab1Content),
+    PotentialEvolution = makeLabel('PotentialEvolution', 150, tab1Content),
+    HasReachedAdvancedMutation = makeLabel(
+        'AdvancedMutation',
+        175,
+        tab1Content
+    ),
+    Weight = makeLabel('Weight', 200, tab1Content),
+    Health = makeLabel('Health', 225, tab1Content),
 }
 
--- Health bar
+-- Health bar (Tab 1)
 local healthBarBg = Instance.new('Frame')
-healthBarBg.Name = 'HealthBarBG'
 healthBarBg.Size = UDim2.new(1, -40, 0, 20)
-healthBarBg.Position = UDim2.new(0, 20, 0, 175)
+healthBarBg.Position = UDim2.new(0, 20, 0, 250)
 healthBarBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
 healthBarBg.BorderSizePixel = 0
-healthBarBg.Parent = readout
+healthBarBg.Parent = tab1Content
 Instance.new('UICorner', healthBarBg).CornerRadius = UDim.new(0, 4)
 
 local healthBar = Instance.new('Frame')
-healthBar.Name = 'HealthBar'
-healthBar.Size = UDim2.new(0, 0, 1, 0) -- will animate width
+healthBar.Size = UDim2.new(0, 0, 1, 0)
 healthBar.Position = UDim2.new(0, 0, 0, 0)
 healthBar.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
 healthBar.BorderSizePixel = 0
 healthBar.Parent = healthBarBg
 Instance.new('UICorner', healthBar).CornerRadius = UDim.new(0, 4)
 
--- Utility
+-- Tab 2 Labels (Stats)
+local tab2Labels = {
+    Resilience = makeLabel('Resilience', 0, tab2Content),
+    MaxResilience = makeLabel('Max Resilience', 25, tab2Content),
+    WalkSpeed = makeLabel('WalkSpeed', 50, tab2Content),
+    WalkSpeedDiff = makeLabel('Speed Difference', 75, tab2Content),
+    RegionCode = makeLabel('Region Code', 100, tab2Content),
+    IsElite = makeLabel('Is Elite', 125, tab2Content),
+    CurrentZone = makeLabel('Current Zone', 150, tab2Content),
+    Credits = makeLabel('Credits', 175, tab2Content),
+    ActivePerks = makeLabel('Active Perks', 200, tab2Content),
+}
+
+-- Resilience bar (Tab 2)
+local resilienceBarBg = Instance.new('Frame')
+resilienceBarBg.Size = UDim2.new(1, -40, 0, 20)
+resilienceBarBg.Position = UDim2.new(0, 20, 0, 225)
+resilienceBarBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+resilienceBarBg.BorderSizePixel = 0
+resilienceBarBg.Parent = tab2Content
+Instance.new('UICorner', resilienceBarBg).CornerRadius = UDim.new(0, 4)
+
+local resilienceBar = Instance.new('Frame')
+resilienceBar.Size = UDim2.new(0, 0, 1, 0)
+resilienceBar.Position = UDim2.new(0, 0, 0, 0)
+resilienceBar.BackgroundColor3 = Color3.fromRGB(100, 150, 255)
+resilienceBar.BorderSizePixel = 0
+resilienceBar.Parent = resilienceBarBg
+Instance.new('UICorner', resilienceBar).CornerRadius = UDim.new(0, 4)
+
+-- Tab switching
+local currentTab = 1
+local function switchTab(tabNum)
+    currentTab = tabNum
+    if tabNum == 1 then
+        tab1Content.Visible = true
+        tab2Content.Visible = false
+        tab1Btn.BackgroundColor3 = Color3.fromRGB(60, 120, 120)
+        tab1Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        tab2Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        tab2Btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+    else
+        tab1Content.Visible = false
+        tab2Content.Visible = true
+        tab1Btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        tab1Btn.TextColor3 = Color3.fromRGB(150, 150, 150)
+        tab2Btn.BackgroundColor3 = Color3.fromRGB(60, 120, 120)
+        tab2Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    end
+end
+
+tab1Btn.MouseButton1Click:Connect(function()
+    switchTab(1)
+end)
+tab2Btn.MouseButton1Click:Connect(function()
+    switchTab(2)
+end)
+switchTab(1)
+
+-- Function to get character
 local function getCharacter(targetPlayer)
     if targetPlayer and targetPlayer.Character then
         return targetPlayer.Character
     end
 end
 
-local function getMutationLevel(char)
-    local hasAdvanced = char:GetAttribute('HasReachedAdvancedMutation')
-    local evoType = char:GetAttribute('EvolutionType')
-    local potentialEvo = char:GetAttribute('PotentialEvolution')
-
-    local level = 'BASIC'
-    if hasAdvanced then
-        level = 'ADVANCED'
-    end
-    if potentialEvo then
-        level = 'POTENTIAL // ' .. potentialEvo
-    end
-    if evoType then
-        level = 'EVOLUTION // ' .. evoType
-    end
-    return level
-end
-
+-- Function to get health
 local function getHealth(char)
     local humanoid = char:FindFirstChildOfClass('Humanoid')
     if humanoid then
@@ -172,82 +319,187 @@ local function getHealth(char)
     return nil, nil
 end
 
-local function updateDisplay(targetPlayer)
+-- Update Tab 1 (Bio Data)
+local function updateTab1(targetPlayer)
     local char = getCharacter(targetPlayer)
     if not char then
-        for _, lbl in pairs(labels) do
+        for _, lbl in pairs(tab1Labels) do
             lbl.Text = '[NO DATA]'
         end
         healthBar.Size = UDim2.new(0, 0, 1, 0)
         return
     end
 
-    local exposure = char:GetAttribute('Exposure') or 'N/A'
-    local strength = char:GetAttribute('StrengthAttribute') or 'N/A'
-    local agility = char:GetAttribute('AgilityAttribute') or 'N/A'
-    local intelligence = char:GetAttribute('IntelligenceAttribute') or 'N/A'
+    local function getCharAttr(attrName)
+        return char:GetAttribute(attrName) or 'N/A'
+    end
+
+    local function getPlayerAttr(attrName)
+        return targetPlayer:GetAttribute(attrName) or 'N/A'
+    end
+
     local health, maxHealth = getHealth(char)
 
-    labels.Subject.Text = 'Subject: ' .. targetPlayer.Name
-    labels.Exposure.Text = 'Exposure: ' .. tostring(exposure)
-    labels.Strength.Text = 'Strength: ' .. tostring(strength)
-    labels.Agility.Text = 'Agility: ' .. tostring(agility)
-    labels.Intelligence.Text = 'Intelligence: ' .. tostring(intelligence)
-    labels.Mutation.Text = 'Mutation: ' .. getMutationLevel(char)
+    tab1Labels.Subject.Text = 'Subject: ' .. targetPlayer.Name
+    tab1Labels.Exposure.Text = 'Exposure: ' .. tostring(getCharAttr('Exposure'))
+    tab1Labels.Strength.Text = 'Strength: '
+        .. tostring(getCharAttr('StrengthAttribute'))
+    tab1Labels.Agility.Text = 'Agility: '
+        .. tostring(getCharAttr('AgilityAttribute'))
+    tab1Labels.Intelligence.Text = 'Intelligence: '
+        .. tostring(getCharAttr('IntelligenceAttribute'))
+    tab1Labels.MutationType.Text = 'MutationType: '
+        .. tostring(getCharAttr('MutationType'))
+    tab1Labels.PotentialEvolution.Text = 'PotentialEvolution: '
+        .. tostring(getCharAttr('PotentialEvolution'))
+    tab1Labels.HasReachedAdvancedMutation.Text = 'AdvancedMutation: '
+        .. tostring(getCharAttr('HasReachedAdvancedMutation'))
+
+    local weight = getPlayerAttr('Weight')
+    tab1Labels.Weight.Text = 'Weight: ' .. tostring(weight) .. ' kg'
 
     if health and maxHealth then
-        labels.Health.Text =
-            string.format('%d / %d', math.floor(health), math.floor(maxHealth))
+        tab1Labels.Health.Text = string.format(
+            'Health: %d / %d',
+            math.floor(health),
+            math.floor(maxHealth)
+        )
         local pct = math.clamp(health / maxHealth, 0, 1)
         healthBar.Size = UDim2.new(pct, 0, 1, 0)
-        -- Color gradient: red (low) -> green (high)
         healthBar.BackgroundColor3 = Color3.fromHSV(pct * 0.33, 1, 1)
     else
-        labels.Health.Text = 'N/A'
+        tab1Labels.Health.Text = 'Health: N/A'
         healthBar.Size = UDim2.new(0, 0, 1, 0)
     end
 end
 
--- Scan button
-scanBtn.MouseButton1Click:Connect(function()
+-- Update Tab 2 (Stats)
+local function updateTab2(targetPlayer)
+    local char = getCharacter(targetPlayer)
+    if not char then
+        for _, lbl in pairs(tab2Labels) do
+            lbl.Text = '[NO DATA]'
+        end
+        resilienceBar.Size = UDim2.new(0, 0, 1, 0)
+        return
+    end
+
+    local function getCharAttr(attrName)
+        return char:GetAttribute(attrName)
+    end
+
+    local function getPlayerAttr(attrName)
+        return targetPlayer:GetAttribute(attrName)
+    end
+
+    -- Get resilience values
+    local resilience = getPlayerAttr('Resilience')
+        or getCharAttr('Resilience')
+        or 'N/A'
+    local maxResilience = getPlayerAttr('MaxResilience')
+        or getCharAttr('MaxResilience')
+        or 'N/A'
+
+    tab2Labels.Resilience.Text = 'Resilience: ' .. tostring(resilience)
+    tab2Labels.MaxResilience.Text = 'Max Resilience: '
+        .. tostring(maxResilience)
+
+    -- Update resilience bar
+    if
+        type(resilience) == 'number'
+        and type(maxResilience) == 'number'
+        and maxResilience > 0
+    then
+        local pct = math.clamp(resilience / maxResilience, 0, 1)
+        resilienceBar.Size = UDim2.new(pct, 0, 1, 0)
+    else
+        resilienceBar.Size = UDim2.new(0, 0, 1, 0)
+    end
+
+    -- Get walkspeed
+    local humanoid = char:FindFirstChildOfClass('Humanoid')
+    if humanoid then
+        local currentSpeed = humanoid.WalkSpeed
+        local defaultSpeed = 9
+        local runningSpeed = 20
+        local difference = currentSpeed - defaultSpeed
+        local diffText = difference >= 0
+                and ('+' .. string.format('%.1f', difference))
+            or string.format('%.1f', difference)
+
+        tab2Labels.WalkSpeed.Text =
+            string.format('WalkSpeed: %.1f', currentSpeed)
+        tab2Labels.WalkSpeedDiff.Text = string.format(
+            'Speed Difference: %s (Default: 9 | Run: 20)',
+            diffText
+        )
+    else
+        tab2Labels.WalkSpeed.Text = 'WalkSpeed: N/A'
+        tab2Labels.WalkSpeedDiff.Text = 'Speed Difference: N/A'
+    end
+
+    -- Get other attributes
+    local regionCode = getPlayerAttr('RegionCode')
+        or getCharAttr('RegionCode')
+        or 'N/A'
+    local isElite = getPlayerAttr('IsElite') or getCharAttr('IsElite') or 'N/A'
+    local currentZone = getPlayerAttr('CurrentZone')
+        or getCharAttr('CurrentZone')
+        or 'N/A'
+
+    tab2Labels.RegionCode.Text = 'Region Code: ' .. tostring(regionCode)
+    tab2Labels.IsElite.Text = 'Is Elite: ' .. tostring(isElite)
+    tab2Labels.CurrentZone.Text = 'Current Zone: ' .. tostring(currentZone)
+
+    -- Get credits from Data folder
+    local dataFolder = targetPlayer:FindFirstChild('Data')
+    local credits = 'N/A'
+    if dataFolder then
+        local creditsValue = dataFolder:FindFirstChild('Credits')
+        if creditsValue then
+            credits = math.floor(creditsValue.Value)
+        end
+    end
+    tab2Labels.Credits.Text = 'Credits: ' .. tostring(credits)
+
+    -- Get active perks from Data folder
+    local activePerks = {}
+    if dataFolder then
+        for _, child in ipairs(dataFolder:GetChildren()) do
+            -- Check if it's a BoolValue or IntValue that represents a perk
+            if
+                (child:IsA('BoolValue') and child.Value == true)
+                or (
+                    child:IsA('IntValue')
+                    and child.Value > 0
+                    and child.Name:lower():find('perk')
+                )
+            then
+                table.insert(activePerks, child.Name)
+            end
+        end
+    end
+
+    if #activePerks > 0 then
+        tab2Labels.ActivePerks.Text = 'Active Perks: '
+            .. table.concat(activePerks, ', ')
+    else
+        tab2Labels.ActivePerks.Text = 'Active Perks: None'
+    end
+end
+
+-- Auto-update every frame
+RunService.RenderStepped:Connect(function()
     local targetName = box.Text
     local targetPlayer = targetName == '' and player
         or Players:FindFirstChild(targetName)
-    if not targetPlayer then
-        for _, lbl in pairs(labels) do
-            lbl.Text = '[INVALID PLAYER]'
-        end
-        healthBar.Size = UDim2.new(0, 0, 1, 0)
-        return
-    end
-    updateDisplay(targetPlayer)
-end)
-
--- Auto-Scan
-local autoScanning = false
-autoBtn.MouseButton1Click:Connect(function()
-    autoScanning = not autoScanning
-    autoBtn.Text = 'AUTO-SCAN: ' .. (autoScanning and 'ON' or 'OFF')
-end)
-
-RunService.RenderStepped:Connect(function()
-    if autoScanning then
-        local targetName = box.Text
-        local targetPlayer = targetName == '' and player
-            or Players:FindFirstChild(targetName)
-        if targetPlayer then
-            updateDisplay(targetPlayer)
-        end
+    if targetPlayer then
+        updateTab1(targetPlayer)
+        updateTab2(targetPlayer)
     end
 end)
 
--- Auto-display self on spawn
-player.CharacterAdded:Connect(function()
-    task.wait(1)
-    updateDisplay(player)
-end)
-
--- Draggable title
+-- Draggable frame
 local dragging, dragInput, mousePos, framePos
 title.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
