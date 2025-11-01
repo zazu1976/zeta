@@ -1,0 +1,291 @@
+-- // ZETA LABS // Bio-Scanner GUI with Animated Health Bar + Auto-Scan
+local Players = game:GetService('Players')
+local UserInputService = game:GetService('UserInputService')
+local RunService = game:GetService('RunService')
+local player = Players.LocalPlayer
+
+-- GUI Creation
+local gui = Instance.new('ScreenGui')
+gui.Name = 'Zeta Labs'
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild('PlayerGui')
+
+local frame = Instance.new('Frame')
+frame.Name = 'MainFrame'
+frame.Size = UDim2.new(0, 400, 0, 420) -- taller to fit health bar
+frame.Position = UDim2.new(0.5, -200, 0.5, -210)
+frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+frame.BorderSizePixel = 0
+frame.Parent = gui
+Instance.new('UICorner', frame).CornerRadius = UDim.new(0, 12)
+
+-- Title bar
+local title = Instance.new('TextLabel')
+title.Name = 'Title'
+title.Size = UDim2.new(1, -30, 0, 30)
+title.Position = UDim2.new(0, 0, 0, 0)
+title.BackgroundTransparency = 1
+title.Font = Enum.Font.GothamBold
+title.TextSize = 20
+title.Text = 'ZETA LABS // BIO-SCANNER'
+title.TextColor3 = Color3.fromRGB(200, 255, 255)
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = frame
+
+-- Close button
+local closeBtn = Instance.new('TextButton')
+closeBtn.Name = 'CloseBtn'
+closeBtn.Size = UDim2.new(0, 30, 0, 30)
+closeBtn.Position = UDim2.new(1, -30, 0, 0)
+closeBtn.Text = 'X'
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 18
+closeBtn.TextColor3 = Color3.fromRGB(255, 100, 100)
+closeBtn.BackgroundTransparency = 1
+closeBtn.Parent = frame
+closeBtn.MouseButton1Click:Connect(function()
+    gui.Enabled = false
+end)
+
+-- Player name box
+local box = Instance.new('TextBox')
+box.Name = 'TargetBox'
+box.Size = UDim2.new(1, -20, 0, 30)
+box.Position = UDim2.new(0, 10, 0, 45)
+box.PlaceholderText = 'Enter player name (leave empty for self)'
+box.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+box.TextColor3 = Color3.fromRGB(255, 255, 255)
+box.Font = Enum.Font.Gotham
+box.TextSize = 16
+box.ClearTextOnFocus = false
+box.Parent = frame
+Instance.new('UICorner', box).CornerRadius = UDim.new(0, 6)
+
+-- Scan button
+local scanBtn = Instance.new('TextButton')
+scanBtn.Name = 'ScanButton'
+scanBtn.Size = UDim2.new(1, -20, 0, 30)
+scanBtn.Position = UDim2.new(0, 10, 0, 85)
+scanBtn.BackgroundColor3 = Color3.fromRGB(0, 120, 255)
+scanBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+scanBtn.Font = Enum.Font.GothamBold
+scanBtn.TextSize = 16
+scanBtn.Text = 'SCAN'
+scanBtn.Parent = frame
+Instance.new('UICorner', scanBtn).CornerRadius = UDim.new(0, 6)
+
+-- Auto-Scan button
+local autoBtn = Instance.new('TextButton')
+autoBtn.Name = 'AutoScanButton'
+autoBtn.Size = UDim2.new(1, -20, 0, 30)
+autoBtn.Position = UDim2.new(0, 10, 0, 125)
+autoBtn.BackgroundColor3 = Color3.fromRGB(255, 140, 0)
+autoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+autoBtn.Font = Enum.Font.GothamBold
+autoBtn.TextSize = 16
+autoBtn.Text = 'AUTO-SCAN: OFF'
+autoBtn.Parent = frame
+Instance.new('UICorner', autoBtn).CornerRadius = UDim.new(0, 6)
+
+-- Readout frame
+local readout = Instance.new('Frame')
+readout.Name = 'Readout'
+readout.Size = UDim2.new(1, -20, 0, 180)
+readout.Position = UDim2.new(0, 10, 0, 165)
+readout.BackgroundTransparency = 1
+readout.Parent = frame
+
+-- Readout labels
+local function makeLabel(name, y)
+    local lbl = Instance.new('TextLabel')
+    lbl.Name = name
+    lbl.BackgroundTransparency = 1
+    lbl.Font = Enum.Font.Gotham
+    lbl.TextSize = 16
+    lbl.TextColor3 = Color3.fromRGB(200, 255, 200)
+    lbl.Position = UDim2.new(0, 0, 0, y)
+    lbl.Size = UDim2.new(1, 0, 0, 25)
+    lbl.Text = name .. ': [N/A]'
+    lbl.Parent = readout
+    return lbl
+end
+
+local labels = {
+    Subject = makeLabel('Subject', 0),
+    Exposure = makeLabel('Exposure', 25),
+    Strength = makeLabel('Strength', 50),
+    Agility = makeLabel('Agility', 75),
+    Intelligence = makeLabel('Intelligence', 100),
+    Mutation = makeLabel('Mutation', 125),
+    Health = makeLabel('Health', 150),
+}
+
+-- Health bar
+local healthBarBg = Instance.new('Frame')
+healthBarBg.Name = 'HealthBarBG'
+healthBarBg.Size = UDim2.new(1, -40, 0, 20)
+healthBarBg.Position = UDim2.new(0, 20, 0, 175)
+healthBarBg.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+healthBarBg.BorderSizePixel = 0
+healthBarBg.Parent = readout
+Instance.new('UICorner', healthBarBg).CornerRadius = UDim.new(0, 4)
+
+local healthBar = Instance.new('Frame')
+healthBar.Name = 'HealthBar'
+healthBar.Size = UDim2.new(0, 0, 1, 0) -- will animate width
+healthBar.Position = UDim2.new(0, 0, 0, 0)
+healthBar.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
+healthBar.BorderSizePixel = 0
+healthBar.Parent = healthBarBg
+Instance.new('UICorner', healthBar).CornerRadius = UDim.new(0, 4)
+
+-- Utility
+local function getCharacter(targetPlayer)
+    if targetPlayer and targetPlayer.Character then
+        return targetPlayer.Character
+    end
+end
+
+local function getMutationLevel(char)
+    local hasAdvanced = char:GetAttribute('HasReachedAdvancedMutation')
+    local evoType = char:GetAttribute('EvolutionType')
+    local potentialEvo = char:GetAttribute('PotentialEvolution')
+
+    local level = 'BASIC'
+    if hasAdvanced then
+        level = 'ADVANCED'
+    end
+    if potentialEvo then
+        level = 'POTENTIAL // ' .. potentialEvo
+    end
+    if evoType then
+        level = 'EVOLUTION // ' .. evoType
+    end
+    return level
+end
+
+local function getHealth(char)
+    local humanoid = char:FindFirstChildOfClass('Humanoid')
+    if humanoid then
+        return humanoid.Health, humanoid.MaxHealth
+    end
+    return nil, nil
+end
+
+local function updateDisplay(targetPlayer)
+    local char = getCharacter(targetPlayer)
+    if not char then
+        for _, lbl in pairs(labels) do
+            lbl.Text = '[NO DATA]'
+        end
+        healthBar.Size = UDim2.new(0, 0, 1, 0)
+        return
+    end
+
+    local exposure = char:GetAttribute('Exposure') or 'N/A'
+    local strength = char:GetAttribute('StrengthAttribute') or 'N/A'
+    local agility = char:GetAttribute('AgilityAttribute') or 'N/A'
+    local intelligence = char:GetAttribute('IntelligenceAttribute') or 'N/A'
+    local health, maxHealth = getHealth(char)
+
+    labels.Subject.Text = 'Subject: ' .. targetPlayer.Name
+    labels.Exposure.Text = 'Exposure: ' .. tostring(exposure)
+    labels.Strength.Text = 'Strength: ' .. tostring(strength)
+    labels.Agility.Text = 'Agility: ' .. tostring(agility)
+    labels.Intelligence.Text = 'Intelligence: ' .. tostring(intelligence)
+    labels.Mutation.Text = 'Mutation: ' .. getMutationLevel(char)
+
+    if health and maxHealth then
+        labels.Health.Text =
+            string.format('%d / %d', math.floor(health), math.floor(maxHealth))
+        local pct = math.clamp(health / maxHealth, 0, 1)
+        healthBar.Size = UDim2.new(pct, 0, 1, 0)
+        -- Color gradient: red (low) -> green (high)
+        healthBar.BackgroundColor3 = Color3.fromHSV(pct * 0.33, 1, 1)
+    else
+        labels.Health.Text = 'N/A'
+        healthBar.Size = UDim2.new(0, 0, 1, 0)
+    end
+end
+
+-- Scan button
+scanBtn.MouseButton1Click:Connect(function()
+    local targetName = box.Text
+    local targetPlayer = targetName == '' and player
+        or Players:FindFirstChild(targetName)
+    if not targetPlayer then
+        for _, lbl in pairs(labels) do
+            lbl.Text = '[INVALID PLAYER]'
+        end
+        healthBar.Size = UDim2.new(0, 0, 1, 0)
+        return
+    end
+    updateDisplay(targetPlayer)
+end)
+
+-- Auto-Scan
+local autoScanning = false
+autoBtn.MouseButton1Click:Connect(function()
+    autoScanning = not autoScanning
+    autoBtn.Text = 'AUTO-SCAN: ' .. (autoScanning and 'ON' or 'OFF')
+end)
+
+RunService.RenderStepped:Connect(function()
+    if autoScanning then
+        local targetName = box.Text
+        local targetPlayer = targetName == '' and player
+            or Players:FindFirstChild(targetName)
+        if targetPlayer then
+            updateDisplay(targetPlayer)
+        end
+    end
+end)
+
+-- Auto-display self on spawn
+player.CharacterAdded:Connect(function()
+    task.wait(1)
+    updateDisplay(player)
+end)
+
+-- Draggable title
+local dragging, dragInput, mousePos, framePos
+title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        mousePos = input.Position
+        framePos = frame.Position
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+title.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - mousePos
+        frame.Position = UDim2.new(
+            framePos.X.Scale,
+            framePos.X.Offset + delta.X,
+            framePos.Y.Scale,
+            framePos.Y.Offset + delta.Y
+        )
+    end
+end)
+
+-- Toggle GUI with "P"
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then
+        return
+    end
+    if input.KeyCode == Enum.KeyCode.P then
+        gui.Enabled = not gui.Enabled
+    end
+end)
