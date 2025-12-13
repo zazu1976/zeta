@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weapon Statistics & Rankings</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #1f2937 0%, #111827 50%, #1f2937 100%); }
+        table { border-collapse: collapse; }
+        th { position: sticky; top: 0; z-index: 10; }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-4xl font-bold text-white">Weapon Statistics & Rankings</h1>
+        </div>
+
+        <!-- Top Weapons Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="bg-gradient-to-br from-yellow-500 to-orange-600 p-4 rounded-lg shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">🏆</span>
+                    <h3 class="font-bold text-white text-lg">Best Overall</h3>
+                </div>
+                <div id="topOverall" class="text-white text-sm"></div>
+            </div>
+
+            <div class="bg-gradient-to-br from-red-500 to-pink-600 p-4 rounded-lg shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">🎯</span>
+                    <h3 class="font-bold text-white text-lg">Highest Damage</h3>
+                </div>
+                <div id="topDamage" class="text-white text-sm"></div>
+            </div>
+
+            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 p-4 rounded-lg shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">⚡</span>
+                    <h3 class="font-bold text-white text-lg">Highest DPS</h3>
+                </div>
+                <div id="topDPS" class="text-white text-sm"></div>
+            </div>
+
+            <div class="bg-gradient-to-br from-blue-500 to-cyan-600 p-4 rounded-lg shadow-xl">
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-2xl">⏱️</span>
+                    <h3 class="font-bold text-white text-lg">Fastest Firerate</h3>
+                </div>
+                <div id="topFirerate" class="text-white text-sm"></div>
+            </div>
+        </div>
+
+        <!-- Main Table -->
+        <div class="bg-white rounded-lg shadow-2xl overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full" id="weaponTable">
+                    <thead class="bg-gray-800 text-white">
+                        <tr>
+                            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700" onclick="sortTable('name')">Weapon <span id="sort-name"></span></th>
+                            <th class="px-4 py-3 text-left cursor-pointer hover:bg-gray-700" onclick="sortTable('category')">Category <span id="sort-category"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('bodyDmg')">Body DMG <span id="sort-bodyDmg"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('headDmg')">Head DMG <span id="sort-headDmg"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('totalDamage')">Total DMG <span id="sort-totalDamage"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('firerate')">Firerate <span id="sort-firerate"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('bodyDPS')">Body DPS <span id="sort-bodyDPS"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('headDPS')">Head DPS <span id="sort-headDPS"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('avgDPS')">Avg DPS <span id="sort-avgDPS"></span></th>
+                            <th class="px-4 py-3 text-center cursor-pointer hover:bg-gray-700" onclick="sortTable('overallScore')">Overall Score <span id="sort-overallScore"></span></th>
+                            <th class="px-4 py-3 text-left">Combat Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Info Boxes -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-800 text-white p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-2">📊 About the Rankings</h3>
+                <ul class="text-sm space-y-1">
+                    <li>• <strong>Overall Score</strong>: Balanced rating (Damage 30%, DPS 40%, Firerate 30%)</li>
+                    <li>• <strong>DPS</strong>: Damage Per Second (damage × firerate ÷ 60)</li>
+                    <li>• <strong>Avg DPS</strong>: Average of body and head DPS</li>
+                    <li>• Click any column to sort by that stat</li>
+                </ul>
+            </div>
+            
+            <div class="bg-gray-800 text-white p-4 rounded-lg">
+                <h3 class="font-bold text-lg mb-2">🎯 Quick Recommendations</h3>
+                <ul class="text-sm space-y-1">
+                    <li>• <strong>All-Round</strong>: OTS-14 GROZA 1, HK416, M4 SOPMOD</li>
+                    <li>• <strong>Close Combat</strong>: Kriss Vector, P90, EVO 3 A1</li>
+                    <li>• <strong>Long Range</strong>: FN FAL, SCAR-H, HK416</li>
+                    <li>• <strong>High Burst</strong>: Desert Eagle, M6 Unica, USP</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const weapons = [
+            { name: "AK-12", bodyDmg: 24, headDmg: 40, firerate: 75, category: "Assault Rifle", notes: "Solid all-rounder. High damage with moderate firerate. Great for mid-range combat and versatile in most situations." },
+            { name: "AKM3", bodyDmg: 24, headDmg: 40, firerate: 75, category: "Assault Rifle", notes: "Identical to AK-12. Reliable workhorse for any engagement distance. Good recoil control." },
+            { name: "AKSU-74U", bodyDmg: 19, headDmg: 23, firerate: 750, category: "Assault Rifle", notes: "High firerate compensates for lower damage. Excellent for close-quarters and spray-down tactics." },
+            { name: "OTS-14 GROZA 4", bodyDmg: 17, headDmg: 25, firerate: 655, category: "Assault Rifle", notes: "Balanced speed and damage. Good mobility weapon for aggressive playstyles and flanking." },
+            { name: "OTS-14 GROZA 1", bodyDmg: 21, headDmg: 31, firerate: 720, category: "Assault Rifle", notes: "TOP-TIER WEAPON! High damage + fast firerate = incredible DPS. Dominates at all ranges." },
+            { name: "XM8-S", bodyDmg: 18, headDmg: 29, firerate: 750, category: "Assault Rifle", notes: "Fast firing with decent damage. Great for suppressive fire and sustained engagements." },
+            { name: "HK416", bodyDmg: 22, headDmg: 30, firerate: 750, category: "Assault Rifle", notes: "Elite tier weapon. High damage + high firerate. Laser accurate and reliable in all combat scenarios." },
+            { name: "CZ-75", bodyDmg: 20, headDmg: 24, firerate: 1070, category: "Pistol", notes: "BEST PISTOL by far! Insane firerate makes it competitive with primaries. Excellent backup weapon." },
+            { name: "FN FAL", bodyDmg: 25, headDmg: 54, firerate: 550, category: "Battle Rifle", notes: "Massive headshot damage! Two-tap potential. Slower fire means you need good accuracy. Devastating at range." },
+            { name: "EVO 3 A1", bodyDmg: 17, headDmg: 22, firerate: 965, category: "SMG", notes: "Ultra-high DPS from rapid fire. Shreds in close quarters. Burns through ammo fast." },
+            { name: "M4A1", bodyDmg: 18, headDmg: 27, firerate: 875, category: "Assault Rifle", notes: "Fast and reliable. Good for aggressive rushes and room clearing. Manageable recoil." },
+            { name: "MP7", bodyDmg: 17, headDmg: 23, firerate: 860, category: "SMG", notes: "Low recoil laser beam. Excellent for headshots. Great mobility for aggressive plays." },
+            { name: "SCAR-H", bodyDmg: 24, headDmg: 49, firerate: 515, category: "Battle Rifle", notes: "High damage per shot. Excels at mid-long range. Tap fire for precision, burst for close combat." },
+            { name: "DESERT EAGLE", bodyDmg: 48, headDmg: 80, firerate: 225, category: "Pistol", notes: "One-shot headshot monster! Slow but devastating. Rewards accuracy. Great for peeking and wallbangs." },
+            { name: "M4 SOPMOD", bodyDmg: 22, headDmg: 33, firerate: 675, category: "Assault Rifle", notes: "Well-rounded performer. Good damage and decent speed. Reliable choice for consistent performance." },
+            { name: "L86A2", bodyDmg: 16, headDmg: 27, firerate: 775, category: "LMG", notes: "Sustained fire support. Lower damage but high capacity. Good for suppression and holding angles." },
+            { name: "G36C", bodyDmg: 17, headDmg: 24, firerate: 825, category: "Assault Rifle", notes: "Fast firing with low recoil. Easy to control. Great beginner weapon and for spray transfers." },
+            { name: "P90", bodyDmg: 14, headDmg: 17, firerate: 1060, category: "SMG", notes: "HIGHEST DPS SMG! Extreme firerate compensates for low damage. Run-and-gun beast. Large magazine." },
+            { name: "TAR-21", bodyDmg: 19, headDmg: 28, firerate: 700, category: "Assault Rifle", notes: "Compact bullpup design. Good mobility and handling. Solid mid-range option." },
+            { name: "GLOCK 41", bodyDmg: 19, headDmg: 24, firerate: 560, category: "Pistol", notes: "Decent pistol. Moderate stats all around. Reliable backup but outclassed by CZ-75." },
+            { name: "MP5", bodyDmg: 18, headDmg: 22, firerate: 775, category: "SMG", notes: "Classic SMG. Smooth recoil and good control. Solid for beginners learning spray control." },
+            { name: "MP7 [S]", bodyDmg: 17, headDmg: 23, firerate: 860, category: "SMG", notes: "Suppressed version. Same great stats with stealth advantage. Good for sneaky flanks." },
+            { name: "M9 Beretta [S]", bodyDmg: 15, headDmg: 30, firerate: 425, category: "Pistol", notes: "Suppressed pistol. High headshot multiplier. Great for stealth kills and sneaky plays." },
+            { name: "MP5SD", bodyDmg: 18, headDmg: 22, firerate: 775, category: "SMG", notes: "Integrated suppressor. Same MP5 performance with stealth. Perfect for silent rushes." },
+            { name: "Kriss Vector", bodyDmg: 11, headDmg: 17, firerate: 1175, category: "SMG", notes: "HIGHEST FIRERATE! Insane spray potential. Low damage per bullet but overwhelming DPS. Ammo hungry!" },
+            { name: "M9 Beretta", bodyDmg: 15, headDmg: 30, firerate: 425, category: "Pistol", notes: "Standard pistol. High headshot damage. Decent backup but slow firerate limits effectiveness." },
+            { name: "USP", bodyDmg: 26, headDmg: 34, firerate: 400, category: "Pistol", notes: "Heavy hitting pistol. High damage per shot. Great for finishing wounded enemies." },
+            { name: "Flintlock", bodyDmg: 98, headDmg: 150, firerate: 10, category: "Special", notes: "ONE SHOT ANYWHERE = KILL! Only 10 RPM = 6 second reload. High risk/reward meme weapon. Fun but impractical." },
+            { name: "M1911", bodyDmg: 23, headDmg: 38, firerate: 400, category: "Pistol", notes: "Classic .45 ACP. Good damage, slow fire. Reliable sidearm for controlled shots." },
+            { name: "M6 Unica", bodyDmg: 75, headDmg: 95, firerate: 225, category: "Revolver", notes: "MASSIVE damage per shot. One-tap to body often enough. Slow reload and fire. High skill ceiling." },
+            { name: "Spas-12", bodyDmg: 56, headDmg: 88, firerate: 185, category: "Shotgun", notes: "Semi-auto shotgun. Devastating up close. One-shot potential. Useless at range." },
+            { name: "M249", bodyDmg: 19, headDmg: 23, firerate: 750, category: "LMG", notes: "Light machine gun. Huge magazine for sustained fire. Good for pre-firing and suppression." },
+            { name: "870 Tactical", bodyDmg: 69, headDmg: 90, firerate: 56, category: "Shotgun", notes: "HIGHEST DAMAGE SHOTGUN! Pump-action = slow. One-shot machine in close quarters. Worthless beyond 10m." },
+            { name: "SM Vector", bodyDmg: 15, headDmg: 24, firerate: 1175, category: "SMG", notes: "Sister to Kriss Vector. Same insane firerate, slightly better damage. Close-range melter!" }
+        ];
+
+        let processedWeapons = weapons.map(w => {
+            const totalDamage = w.bodyDmg + w.headDmg;
+            const bodyDPS = Math.round((w.bodyDmg * w.firerate) / 60);
+            const headDPS = Math.round((w.headDmg * w.firerate) / 60);
+            const avgDPS = Math.round((bodyDPS + headDPS) / 2);
+            
+            const damageScore = (totalDamage / 248) * 100;
+            const dpsScore = (avgDPS / 330) * 100;
+            const firerateScore = (w.firerate / 1175) * 100;
+            const overallScore = Math.round((damageScore * 0.3) + (dpsScore * 0.4) + (firerateScore * 0.3));
+            
+            return { ...w, totalDamage, bodyDPS, headDPS, avgDPS, overallScore };
+        });
+
+        let currentSort = { key: 'overallScore', direction: 'desc' };
+
+        function sortTable(key) {
+            if (currentSort.key === key) {
+                currentSort.direction = currentSort.direction === 'desc' ? 'asc' : 'desc';
+            } else {
+                currentSort.key = key;
+                currentSort.direction = 'desc';
+            }
+            renderTable();
+        }
+
+        function renderTable() {
+            const sorted = [...processedWeapons].sort((a, b) => {
+                let aVal = a[currentSort.key];
+                let bVal = b[currentSort.key];
+                
+                if (typeof aVal === 'string') {
+                    return currentSort.direction === 'asc' 
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                }
+                
+                return currentSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = sorted.map((w, i) => {
+                const scoreColor = w.overallScore >= 80 ? 'bg-green-500' :
+                                 w.overallScore >= 60 ? 'bg-blue-500' :
+                                 w.overallScore >= 40 ? 'bg-yellow-500' : 'bg-gray-500';
+                
+                return `
+                    <tr class="${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b hover:bg-blue-50">
+                        <td class="px-4 py-3 font-bold text-gray-800">${w.name}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${w.category}</td>
+                        <td class="px-4 py-3 text-center">${w.bodyDmg}</td>
+                        <td class="px-4 py-3 text-center">${w.headDmg}</td>
+                        <td class="px-4 py-3 text-center font-bold text-red-600">${w.totalDamage}</td>
+                        <td class="px-4 py-3 text-center">${w.firerate}</td>
+                        <td class="px-4 py-3 text-center text-orange-600">${w.bodyDPS}</td>
+                        <td class="px-4 py-3 text-center text-purple-600">${w.headDPS}</td>
+                        <td class="px-4 py-3 text-center font-bold text-blue-600">${w.avgDPS}</td>
+                        <td class="px-4 py-3 text-center">
+                            <span class="px-3 py-1 rounded-full font-bold text-white ${scoreColor}">${w.overallScore}</span>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">${w.notes}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update sort indicators
+            document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+            const indicator = document.getElementById(`sort-${currentSort.key}`);
+            if (indicator) {
+                indicator.textContent = currentSort.direction === 'desc' ? '▼' : '▲';
+            }
+        }
+
+        function updateTopWeapons() {
+            const byOverall = [...processedWeapons].sort((a, b) => b.overallScore - a.overallScore);
+            const byDamage = [...processedWeapons].sort((a, b) => b.totalDamage - a.totalDamage);
+            const byDPS = [...processedWeapons].sort((a, b) => b.avgDPS - a.avgDPS);
+            const byFirerate = [...processedWeapons].sort((a, b) => b.firerate - a.firerate);
+
+            document.getElementById('topOverall').innerHTML = byOverall.slice(0, 3)
+                .map((w, i) => `<div class="mb-1">${i+1}. ${w.name} (${w.overallScore})</div>`).join('');
+            document.getElementById('topDamage').innerHTML = byDamage.slice(0, 3)
+                .map((w, i) => `<div class="mb-1">${i+1}. ${w.name} (${w.totalDamage})</div>`).join('');
+            document.getElementById('topDPS').innerHTML = byDPS.slice(0, 3)
+                .map((w, i) => `<div class="mb-1">${i+1}. ${w.name} (${w.avgDPS})</div>`).join('');
+            document.getElementById('topFirerate').innerHTML = byFirerate.slice(0, 3)
+                .map((w, i) => `<div class="mb-1">${i+1}. ${w.name} (${w.firerate} RPM)</div>`).join('');
+        }
+
+        function downloadCSV() {
+            try {
+                const headers = ['Weapon', 'Category', 'Body Damage', 'Head Damage', 'Total Damage', 'Firerate (RPM)', 'Body DPS', 'Head DPS', 'Avg DPS', 'Overall Score', 'Combat Notes'];
+                const rows = processedWeapons
+                    .sort((a, b) => b.overallScore - a.overallScore)
+                    .map(w => [
+                        w.name, w.category, w.bodyDmg, w.headDmg, w.totalDamage,
+                        w.firerate, w.bodyDPS, w.headDPS, w.avgDPS, w.overallScore,
+                        w.notes.replace(/"/g, '""')
+                    ]);
+                
+                const csvContent = [headers, ...rows]
+                    .map(row => row.map(cell => `"${cell}"`).join(','))
+                    .join('\r\n');
+                
+                const BOM = '\uFEFF';
+                const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const url = window.URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'weapon_statistics.csv';
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                setTimeout(() => {
+                    document.body.removeChild(link);
+                    window.URL.revokeObjectURL(url);
+                }, 100);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Download failed. Try copying the table data manually.');
+            }
+        }
+
+        // Initialize
+        renderTable();
+        updateTopWeapons();
+    </script>
+</body>
+</html>
